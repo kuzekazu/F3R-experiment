@@ -153,5 +153,7 @@ TEST_CASE("solver BiCGStab/GMRES/FGMRES") {
 
   solver_test(Solver<BiCGStab, double>(A, M, {1000}));
   solver_test(Solver<GMRES, double>(A, M, {50, false}));
-  solver_test(Solver<FGMRES, double>(A, M, {50, false}));
+
+  param::SolverConfig config;
+  solver_test(Solver<FGMRES, double>(A, M, {50, false}, config));
 }
