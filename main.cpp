@@ -34,7 +34,9 @@ int main(int argc, char *argv[]) {
   auto R = Solver<RichardsonAdapt, half>(A, M, {2, 1.0, 64});
   auto F = Solver<FGMRES, float>(A16, R, {4, true});
   auto F2 = Solver<FGMRES, float>(A32, F, {8, true});
-  auto solver = Solver<FGMRES, double>(A, F2, {100, false});
+
+  senk::param::SolverConfig config;
+  auto solver = Solver<FGMRES, double>(A, F2, {100, false}, config);
 
   auto t = timer();
   t.tick();
