@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
   };
 #endif
 
-#if defined(FLOAT)
+/* #if defined(FLOAT)
   auto A32 = CSR<float, tag>(A);
   auto L = trsv::l::CSR<float, host, strategy::partition>(l);
   auto U = trsv::du::CSR<float, host, strategy::partition>(u);
@@ -136,9 +136,26 @@ int main(int argc, char *argv[]) {
       res += f3r.solve(b, x, cnv);
     return res;
   };
+#endif */
+
+#if defined(FLOAT)
+  auto A32 = CSR<float, tag>(A);
+  auto L = trsv::l::CSR<float, host, strategy::partition>(l);
+  auto U = trsv::du::CSR<float, host, strategy::partition>(u);
+  auto M = concat<float>(U, L);
+  auto R = Solver<RichardsonAdapt, float>(A, M, {m4, 1.0, config.c});
+  auto F = Solver<FGMRES, float>(A32, R, {m3, true}, config, 3);
+  auto F2 = Solver<FGMRES, float>(A32, F, {m2, true}, config, 2);
+  auto f3r = Solver<FGMRES, double>(A, F2, {100, false}, config, 1);
+  auto solver = [&f3r](auto b, auto x, auto cnv) {
+    auto res = f3r.solve(b, x, cnv);
+    while (!res.is_solved && res.res_iter < config.max_outer_iter)
+      res += f3r.solve(b, x, cnv);
+    return res;
+  };
 #endif
 
-#if defined(HALF)
+/* #if defined(HALF)
   auto A32 = CSR<float, tag>(A);
   auto A16 = CSR<half, tag>(A);
   auto L = trsv::l::CSR<half, host, strategy::partition>(l);
@@ -151,6 +168,24 @@ int main(int argc, char *argv[]) {
   auto solver = [&f3r](auto b, auto x, auto cnv) {
     auto res = f3r.solve(b, x, cnv);
     while (!res.is_solved && res.res_iter < 300)
+      res += f3r.solve(b, x, cnv);
+    return res;
+  };
+#endif */
+
+#if defined(HALF)
+  auto A32 = CSR<float, tag>(A);
+  auto A16 = CSR<half, tag>(A);
+  auto L = trsv::l::CSR<half, host, strategy::partition>(l);
+  auto U = trsv::du::CSR<half, host, strategy::partition>(u);
+  auto M = concat<half>(U, L);
+  auto R = Solver<RichardsonAdapt, half>(A, M, {m4, 1.0, config.c});
+  auto F = Solver<FGMRES, float>(A16, R, {m3, true}, config, 3);
+  auto F2 = Solver<FGMRES, float>(A32, F, {m2, true}, config, 2);
+  auto f3r = Solver<FGMRES, double>(A, F2, {100, false}, config, 1);
+  auto solver = [&f3r](auto b, auto x, auto cnv) {
+    auto res = f3r.solve(b, x, cnv);
+    while (!res.is_solved && res.res_iter < config.max_outer_iter)
       res += f3r.solve(b, x, cnv);
     return res;
   };
